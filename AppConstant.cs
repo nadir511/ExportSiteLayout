@@ -4,5 +4,6 @@ namespace ExportSiteLayout;
 
 public static class AppConstant
 {
-    public static string[] dropdownValues = { "Update", "Add" };
+    public static string UpdateValue = "Update";
+    public static string AddValue = "Add";
 }
