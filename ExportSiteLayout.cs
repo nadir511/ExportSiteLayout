@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
@@ -10,7 +9,6 @@ using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace ExportSiteLayout
@@ -36,7 +34,7 @@ namespace ExportSiteLayout
 
                 Console.WriteLine($"File creation starts at: '{DateTime.Now}");
                 //Insert Site Export Layout Status
-                await ExecuteNonQueryStoreProcedure("insertExportLayOutStatus",siteId,userId);
+                await ExecuteNonQueryStoreProcedure("insertExportLayOutStatus", siteId, userId);
 
                 #region|Folder Path to save Files|
                 // Get the root path of your application
@@ -97,7 +95,7 @@ namespace ExportSiteLayout
                 // Save the Excel file
                 File.WriteAllBytes(fileCompletePathwithDirectory, package.GetAsByteArray());
                 //Update Site Export Layout Status to complete
-                await ExecuteNonQueryStoreProcedure("updateSiteLayoutExportStatus", siteId, userId,false);
+                await ExecuteNonQueryStoreProcedure("updateSiteLayoutExportStatus", siteId, userId, false);
                 Console.WriteLine($"File creation completed and saved at: '{DateTime.Now}");
                 return true;
                 #endregion
@@ -499,7 +497,7 @@ namespace ExportSiteLayout
                         {
                             command.Parameters.AddWithValue("@userId", userId);
                         }
-                        if (isActive!=null)
+                        if (isActive != null)
                         {
                             command.Parameters.AddWithValue("@Status", isActive);
                         }
