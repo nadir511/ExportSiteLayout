@@ -10,6 +10,7 @@ using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace ExportSiteLayout
@@ -34,6 +35,26 @@ namespace ExportSiteLayout
                 log.LogInformation("C# HTTP trigger function processed a request.");
 
                 Console.WriteLine($"File creation starts at: '{DateTime.Now}");
+                //Insert Site Export Layout Status
+                await ExecuteNonQueryStoreProcedure("insertExportLayOutStatus",siteId,userId);
+
+                #region|Folder Path to save Files|
+                // Get the root path of your application
+                string rootPath = _webHostEnvironment.ContentRootPath;
+                // Specify the name of the specific folder you want to add
+                string folderName = "ExportSiteLayoutFiles";
+                // Combine the root path with the folder name to get the complete path
+                string folderPath = Path.Combine(rootPath.Replace("\\bin\\Debug\\net6.0", null), folderName);
+                //If not then create directory
+                if (!Directory.Exists(folderPath))
+                    Directory.CreateDirectory(folderPath);
+                // Now, folderPath contains the server path to your specific folder
+                // You can use folderPath for various purposes, such as file operations
+                // For example, to create a file in this folder:
+                string fileCompletePathwithDirectory = Path.Combine(folderPath, "SiteLayOutFile_" + siteId + "_" + userId + ".xlsx");
+
+                #endregion
+
                 #region|Common Fields|
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
                 var package = new ExcelPackage();
@@ -68,23 +89,15 @@ namespace ExportSiteLayout
                 #endregion
 
                 #region|Save Excel file in the folder|
-                // Get the root path of your application
-                string rootPath = _webHostEnvironment.ContentRootPath;
-
-                // Specify the name of the specific folder you want to add
-                string folderName = "ExportSiteLayoutFiles";
-
-                // Combine the root path with the folder name to get the complete path
-                string folderPath = Path.Combine(rootPath.Replace("\\bin\\Debug\\net6.0", null), folderName);
-
-                // Now, folderPath contains the server path to your specific folder
-
-                // You can use folderPath for various purposes, such as file operations
-                // For example, to create a file in this folder:
-                string filePath = Path.Combine(folderPath, "SiteLayOutFile_" + siteId + "_" + userId + ".xlsx");
-
+                //Delete the Old File
+                if (File.Exists(fileCompletePathwithDirectory))
+                {
+                    File.Delete(fileCompletePathwithDirectory);
+                };
                 // Save the Excel file
-                File.WriteAllBytes(filePath, package.GetAsByteArray());
+                File.WriteAllBytes(fileCompletePathwithDirectory, package.GetAsByteArray());
+                //Update Site Export Layout Status to complete
+                await ExecuteNonQueryStoreProcedure("updateSiteLayoutExportStatus", siteId, userId,false);
                 Console.WriteLine($"File creation completed and saved at: '{DateTime.Now}");
                 return true;
                 #endregion
@@ -459,6 +472,39 @@ namespace ExportSiteLayout
                             adapter.Fill(dataTable);
                             return dataTable;
                         }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+        static async Task<bool> ExecuteNonQueryStoreProcedure(string procedureName, int siteId, string userId = null, bool? isActive = null)
+        {
+            try
+            {
+                string connectionString = Environment.GetEnvironmentVariable("ConnectionString");
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (SqlCommand command = new SqlCommand(procedureName, connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+
+                        // Add parameters if necessary
+                        command.Parameters.AddWithValue("@SiteId", siteId);
+                        if (userId != null)
+                        {
+                            command.Parameters.AddWithValue("@userId", userId);
+                        }
+                        if (isActive!=null)
+                        {
+                            command.Parameters.AddWithValue("@Status", isActive);
+                        }
+                        command.ExecuteNonQuery();
+                        return true;
                     }
                 }
             }
