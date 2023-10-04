@@ -1,0 +1,8 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "ConnectionString": "Data Source=octopusdigitalsql.database.windows.net;Initial Catalog=Production_Replica;Persist Security Info=True;User ID=octopusdigital;Password=avanceon@786",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet"
+  }
+}
